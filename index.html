@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>My Dashboard</title>
+<title>Sarthak's Daily Tracker</title>
 <style>
   :root{
-    --bg:#f6f7f9; --card:#ffffff; --ink:#1f2430; --muted:#8a93a3;
-    --line:#e6e9ef; --accent:#2f3542; --accent2:#475569;
-    --high:#ef4444; --med:#f59e0b; --low:#10b981; --now:#ef4444;
+    --bg:#13151a; --card:#1b1e26; --ink:#e7e9ee; --muted:#8b93a3;
+    --line:#2a2e38; --accent:#3a3f4b; --accent2:#aab2c4;
+    --high:#f87171; --med:#fbbf24; --low:#34d399; --now:#f87171;
+    --surface2:#22252e; --surface3:#262a34;
   }
   *{box-sizing:border-box;}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);}
@@ -25,14 +26,14 @@
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px;}
   .card h2{font-size:15px;margin:0 0 12px;display:flex;justify-content:space-between;align-items:center;}
   .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
-  input[type=text], select, input[type=number]{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;background:#fbfbfc;}
+  input[type=text], select, input[type=number]{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--surface2);}
   input[type=text]{flex:1;min-width:140px;}
   label.chk{font-size:12px;color:var(--accent2);display:flex;align-items:center;gap:5px;}
   button.primary{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;}
   button.ghost{background:none;border:none;cursor:pointer;color:var(--muted);}
   button.ghost:hover{color:var(--high);}
-  button.small{font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--line);background:#fff;cursor:pointer;}
-  .task{display:flex;align-items:center;gap:8px;background:#fafbfc;border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:4px solid var(--med);}
+  button.small{font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--line);background:var(--surface3);color:var(--ink);cursor:pointer;}
+  .task{display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:4px solid var(--med);}
   .task.high{border-left-color:var(--high);}
   .task.low{border-left-color:var(--low);}
   .task.faded{opacity:.25;}
@@ -44,20 +45,20 @@
   .cat-badge{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;}
   .empty{text-align:center;color:var(--muted);font-size:13px;padding:24px 0;}
   .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;}
-  .stat{background:#fafbfc;border-radius:10px;padding:12px;text-align:center;}
+  .stat{background:var(--surface2);border-radius:10px;padding:12px;text-align:center;}
   .stat .num{font-size:22px;font-weight:700;}
   .stat .lbl{font-size:11px;color:var(--muted);margin-top:2px;}
-  .bar-bg{background:#e9ecf1;border-radius:6px;height:8px;overflow:hidden;margin-top:6px;}
+  .bar-bg{background:var(--surface3);border-radius:6px;height:8px;overflow:hidden;margin-top:6px;}
   .bar-fill{height:100%;background:var(--low);transition:width .3s;}
   .table-scroll{overflow-x:auto;position:relative;}
   .grid7{display:grid;grid-template-columns:56px repeat(7,1fr);gap:3px;min-width:760px;position:relative;}
   .grid7.today-only{grid-template-columns:56px 1fr;min-width:280px;}
   .hcell{font-size:10px;color:var(--muted);display:flex;align-items:center;justify-content:flex-end;padding-right:6px;}
   .dhead{text-align:center;font-size:12px;font-weight:700;color:var(--muted);padding:4px 0;border-radius:6px;}
-  .dhead.today{background:#eef4ff;color:#2563eb;}
-  .slot{min-height:46px;border:1px solid #eef0f4;border-radius:6px;position:relative;background:#fcfcfd;}
-  .slot.today-col{background:#fafcff;}
-  .slot.dragover{background:#eef4ff;border-color:#93c5fd;}
+  .dhead.today{background:#1e2a44;color:#7eb2ff;}
+  .slot{min-height:46px;border:1px solid var(--line);border-radius:6px;position:relative;background:var(--surface2);}
+  .slot.today-col{background:#1a2230;}
+  .slot.dragover{background:#1e2a44;border-color:#5b8fd9;}
   .slot.dim{opacity:.2;}
   .ev{position:absolute;inset:2px;border-radius:6px;font-size:10px;padding:3px 4px 3px 6px;display:flex;align-items:flex-start;justify-content:space-between;gap:3px;border:1px solid rgba(0,0,0,.08);z-index:2;overflow:hidden;}
   .ev.buffer{opacity:.55;font-style:italic;}
@@ -72,8 +73,8 @@
   .colorpick div{width:18px;height:18px;border-radius:5px;cursor:pointer;border:2px solid transparent;}
   .topline{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
   .save-note{font-size:11px;color:var(--low);}
-  .tray{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding:10px;background:#fafbfc;border:1px dashed var(--line);border-radius:10px;min-height:44px;}
-  .tray.dragover{background:#eef4ff;border-color:#93c5fd;}
+  .tray{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding:10px;background:var(--surface2);border:1px dashed var(--line);border-radius:10px;min-height:44px;}
+  .tray.dragover{background:#1e2a44;border-color:#5b8fd9;}
   .tray-empty{font-size:12px;color:var(--muted);padding:6px 4px;}
   .chip{display:flex;align-items:center;gap:6px;border-radius:8px;padding:6px 10px;font-size:12px;border:1px solid rgba(0,0,0,.08);cursor:grab;}
   .chip.overdue{box-shadow:0 0 0 1.5px #f97316;}
@@ -91,7 +92,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>My Dashboard</h1>
+  <h1>Sarthak's Daily Tracker</h1>
   <p class="sub">Tasks &amp; weekly schedule — auto-saved on this device</p>
 
   <div class="tabs">
@@ -134,7 +135,7 @@
     <div class="legend" id="legend"></div>
     <p class="sub" style="margin:0 0 12px;">Drag chips onto the grid to schedule. Drag the ⠿ handle to reschedule. Drag the bottom-right corner to resize duration.</p>
 
-    <div id="slotForm" class="row" style="display:none;background:#fafbfc;padding:10px;border-radius:10px;flex-wrap:wrap;">
+    <div id="slotForm" class="row" style="display:none;background:var(--surface2);padding:10px;border-radius:10px;flex-wrap:wrap;">
       <select id="formDay"></select>
       <select id="formHour"></select>
       <select id="formDuration">
@@ -189,11 +190,11 @@ function buildHours(){ return Array.from({length: dayEnd-dayStart+1}, (_,i)=>day
 let HOURS = buildHours();
 let hideEmptyHours = JSON.parse(localStorage.getItem('dash_hideEmpty') || 'false');
 const CATEGORIES = [
-  {key:"work", label:"Work", color:"#dbeafe", border:"#60a5fa"},
-  {key:"personal", label:"Personal", color:"#fce7f3", border:"#f472b6"},
-  {key:"health", label:"Health", color:"#d1fae5", border:"#34d399"},
-  {key:"learning", label:"Learning", color:"#ede9fe", border:"#a78bfa"},
-  {key:"other", label:"Other", color:"#fef3c7", border:"#fbbf24"},
+  {key:"work", label:"Work", color:"#1e3a5f", border:"#60a5fa", text:"#bfdbfe"},
+  {key:"personal", label:"Personal", color:"#4a2540", border:"#f472b6", text:"#fbcfe8"},
+  {key:"health", label:"Health", color:"#1d3b30", border:"#34d399", text:"#a7f3d0"},
+  {key:"learning", label:"Learning", color:"#332355", border:"#a78bfa", text:"#ddd6fe"},
+  {key:"other", label:"Other", color:"#4a3a16", border:"#fbbf24", text:"#fde68a"},
 ];
 function catInfo(key){ return CATEGORIES.find(c=>c.key===key) || CATEGORIES[4]; }
 
@@ -275,7 +276,7 @@ function renderTodos(){
     div.innerHTML = `
       <div class="check ${t.done?'done':''}" onclick="toggleTodo(${t.id})">${t.done?'✓':''}</div>
       <div class="task-text" contenteditable="true" onblur="editTodo(${t.id}, this.innerText)">${t.text}</div>
-      <span class="cat-badge" style="background:${c.color};color:#333;">${c.label}</span>
+      <span class="cat-badge" style="background:${c.color};color:${c.text};">${c.label}</span>
       <select onchange="setPriority(${t.id}, this.value)" style="font-size:11px;padding:4px 6px;">
         <option value="high" ${t.priority==='high'?'selected':''}>High</option>
         <option value="medium" ${t.priority==='medium'?'selected':''}>Medium</option>
@@ -446,6 +447,7 @@ function renderTray(){
     chip.style.display = match ? 'flex' : 'none';
     chip.draggable = true;
     chip.style.background = c.color;
+    chip.style.color = c.text;
     chip.style.borderColor = c.border;
     chip.innerHTML = `<span>⠿ ${overdue?'⏳ ':''}${ev.label}</span><button class="small" title="Auto-schedule next free slot" onclick="autoSchedule(${ev.id})">⏱</button>`;
     chip.addEventListener('dragstart', e=>{ dragId = ev.id; e.dataTransfer.setData('text/plain', String(ev.id)); });
@@ -511,6 +513,7 @@ function renderGrid(){
         const evDiv = document.createElement('div');
         evDiv.className='ev' + (ev.isBuffer?' buffer':'') + (match?'':' dim');
         evDiv.style.background = c.color;
+        evDiv.style.color = c.text;
         evDiv.style.borderColor = c.border;
         evDiv.style.height = `calc(${(ev.duration||1)*100}% + ${((ev.duration||1)-1)*3}px)`;
         evDiv.innerHTML = `<span class="handle" draggable="true">⠿</span><span class="lbl" contenteditable="true">${ev.label}</span>${ev.recurring?'<span class="rec-badge">🔁</span>':''}<button>✕</button><div class="resize"></div>`;
