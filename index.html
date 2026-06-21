@@ -656,6 +656,30 @@ function renderHistory(){
   `).join('');
 }
 
+/* ---------- ONE-TIME TASK MIGRATION (adds tasks from user's list, as recurring slots) ---------- */
+(function migrateNewTasks(){
+  const MIGRATION_KEY = 'dash_migration_v1_newtasks';
+  if(localStorage.getItem(MIGRATION_KEY)) return; // already applied
+  const newTasks = [
+    {text:"Workout 🏋️🚴💪 (30min)", priority:"high", category:"health"},
+    {text:"Piano 🎹 (45 min)", priority:"medium", category:"learning"},
+    {text:"German 🇩🇪 (45 min)", priority:"medium", category:"learning"},
+    {text:"CAT 1 (1.5Hr)", priority:"high", category:"learning"},
+    {text:"CAT 2 (1.5Hr)", priority:"high", category:"learning"},
+    {text:"Python practice (30 Min)", priority:"high", category:"learning"},
+    {text:"Reading 📖 (30min)", priority:"medium", category:"learning"},
+    {text:"Entertainment 1 (1Hr)", priority:"high", category:"personal"},
+    {text:"Entertainment 2 (1Hr)", priority:"high", category:"personal"},
+  ];
+  newTasks.forEach((nt, idx)=>{
+    const id = Date.now() + idx; // unique enough within this loop
+    todos.push({id, text:nt.text, done:false, priority:nt.priority, category:nt.category, createdAt:Date.now()});
+    events.push({id: Date.now()+idx+0.5, taskId:id, day:null, hour:null, duration:1, label:nt.text, category:nt.category, recurring:true, isBuffer:false});
+  });
+  save();
+  localStorage.setItem(MIGRATION_KEY, '1');
+})();
+
 populateFormSelectors();
 renderTodos();
 renderTray();
