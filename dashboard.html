@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Dashboard</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#1f2430; --muted:#8a93a3;
+    --line:#e6e9ef; --accent:#2f3542; --accent2:#475569;
+    --high:#ef4444; --med:#f59e0b; --low:#10b981; --now:#ef4444;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);}
+  .wrap{max-width:1080px;margin:0 auto;padding:18px 14px 60px;}
+  h1{font-size:22px;margin:4px 0 2px;}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:16px;}
+  .tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+  .tab-btn{display:flex;align-items:center;gap:6px;padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:14px;font-weight:600;cursor:pointer;color:var(--accent2);}
+  .tab-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .searchbox{flex:1;min-width:140px;max-width:240px;margin-left:auto;}
+  .searchbox input{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;}
+  .undo-btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer;color:var(--accent2);}
+  .undo-btn:disabled{opacity:.4;cursor:not-allowed;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px;}
+  .card h2{font-size:15px;margin:0 0 12px;display:flex;justify-content:space-between;align-items:center;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+  input[type=text], select, input[type=number]{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;background:#fbfbfc;}
+  input[type=text]{flex:1;min-width:140px;}
+  label.chk{font-size:12px;color:var(--accent2);display:flex;align-items:center;gap:5px;}
+  button.primary{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;}
+  button.ghost{background:none;border:none;cursor:pointer;color:var(--muted);}
+  button.ghost:hover{color:var(--high);}
+  button.small{font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--line);background:#fff;cursor:pointer;}
+  .task{display:flex;align-items:center;gap:8px;background:#fafbfc;border-radius:10px;padding:10px 12px;margin-bottom:8px;border-left:4px solid var(--med);}
+  .task.high{border-left-color:var(--high);}
+  .task.low{border-left-color:var(--low);}
+  .task.faded{opacity:.25;}
+  .check{width:20px;height:20px;border-radius:50%;border:2px solid #cbd2dc;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .check.done{background:var(--low);border-color:var(--low);color:#fff;font-size:12px;}
+  .task-text{flex:1;font-size:13.5px;}
+  .task.done .task-text{text-decoration:line-through;color:var(--muted);}
+  .task-text[contenteditable=true]{outline:none;border-bottom:1px dashed var(--muted);}
+  .cat-badge{font-size:10px;padding:2px 7px;border-radius:20px;font-weight:600;}
+  .empty{text-align:center;color:var(--muted);font-size:13px;padding:24px 0;}
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;}
+  .stat{background:#fafbfc;border-radius:10px;padding:12px;text-align:center;}
+  .stat .num{font-size:22px;font-weight:700;}
+  .stat .lbl{font-size:11px;color:var(--muted);margin-top:2px;}
+  .bar-bg{background:#e9ecf1;border-radius:6px;height:8px;overflow:hidden;margin-top:6px;}
+  .bar-fill{height:100%;background:var(--low);transition:width .3s;}
+  .table-scroll{overflow-x:auto;position:relative;}
+  .grid7{display:grid;grid-template-columns:56px repeat(7,1fr);gap:3px;min-width:760px;position:relative;}
+  .grid7.today-only{grid-template-columns:56px 1fr;min-width:280px;}
+  .hcell{font-size:10px;color:var(--muted);display:flex;align-items:center;justify-content:flex-end;padding-right:6px;}
+  .dhead{text-align:center;font-size:12px;font-weight:700;color:var(--muted);padding:4px 0;border-radius:6px;}
+  .dhead.today{background:#eef4ff;color:#2563eb;}
+  .slot{min-height:46px;border:1px solid #eef0f4;border-radius:6px;position:relative;background:#fcfcfd;}
+  .slot.today-col{background:#fafcff;}
+  .slot.dragover{background:#eef4ff;border-color:#93c5fd;}
+  .slot.dim{opacity:.2;}
+  .ev{position:absolute;inset:2px;border-radius:6px;font-size:10px;padding:3px 4px 3px 6px;display:flex;align-items:flex-start;justify-content:space-between;gap:3px;border:1px solid rgba(0,0,0,.08);z-index:2;overflow:hidden;}
+  .ev.buffer{opacity:.55;font-style:italic;}
+  .ev span.lbl{overflow:visible;text-overflow:unset;white-space:normal;word-break:break-word;line-height:1.15;flex:1;outline:none;}
+  .ev .handle{cursor:grab;font-size:11px;opacity:.55;padding:0 2px;flex-shrink:0;}
+  .ev .handle:active{cursor:grabbing;}
+  .ev .resize{position:absolute;bottom:0;right:0;width:10px;height:10px;cursor:ns-resize;opacity:.4;}
+  .ev button{background:none;border:none;cursor:pointer;font-size:11px;color:inherit;opacity:.55;flex-shrink:0;}
+  .ev button:hover{opacity:1;}
+  .ev .rec-badge{font-size:9px;opacity:.7;flex-shrink:0;}
+  .colorpick{display:flex;gap:5px;}
+  .colorpick div{width:18px;height:18px;border-radius:5px;cursor:pointer;border:2px solid transparent;}
+  .topline{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
+  .save-note{font-size:11px;color:var(--low);}
+  .tray{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding:10px;background:#fafbfc;border:1px dashed var(--line);border-radius:10px;min-height:44px;}
+  .tray.dragover{background:#eef4ff;border-color:#93c5fd;}
+  .tray-empty{font-size:12px;color:var(--muted);padding:6px 4px;}
+  .chip{display:flex;align-items:center;gap:6px;border-radius:8px;padding:6px 10px;font-size:12px;border:1px solid rgba(0,0,0,.08);cursor:grab;}
+  .chip.overdue{box-shadow:0 0 0 1.5px #f97316;}
+  .chip button.small{margin-left:4px;}
+  .nowline{position:absolute;left:56px;right:0;height:2px;background:var(--now);z-index:5;pointer-events:none;}
+  .nowline::before{content:'now';position:absolute;left:-2px;top:-8px;font-size:9px;background:var(--now);color:#fff;padding:1px 4px;border-radius:4px;}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;font-size:11px;color:var(--accent2);}
+  .legend span{display:flex;align-items:center;gap:4px;}
+  .legend i{width:10px;height:10px;border-radius:3px;display:inline-block;}
+  .budget-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px;}
+  .budget-row .name{width:80px;color:var(--accent2);}
+  .budget-row input{width:55px;}
+  @media (max-width:600px){ h1{font-size:19px;} .searchbox{max-width:none;width:100%;order:5;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>My Dashboard</h1>
+  <p class="sub">Tasks &amp; weekly schedule — auto-saved on this device</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="todo" onclick="switchTab('todo')">✅ To-Do List</button>
+    <button class="tab-btn" data-tab="timetable" onclick="switchTab('timetable')">🗓️ Timetable</button>
+    <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">📊 Stats</button>
+    <button class="undo-btn" id="undoBtn" onclick="undo()" disabled>↺ Undo</button>
+    <div class="searchbox"><input type="text" id="searchInput" placeholder="🔍 Search tasks & slots..." oninput="onSearch()"></div>
+  </div>
+
+  <!-- TODO TAB -->
+  <div id="tab-todo" class="card">
+    <h2><span>Tasks</span><span id="todoCount" class="save-note"></span></h2>
+    <div class="row">
+      <input type="text" id="newTodoInput" placeholder="Add a new task and press Enter...">
+      <select id="newPriority">
+        <option value="high">High</option>
+        <option value="medium" selected>Medium</option>
+        <option value="low">Low</option>
+      </select>
+      <select id="newCategory"></select>
+      <button class="primary" onclick="addTodo()">Add</button>
+    </div>
+    <p class="sub" style="margin:-6px 0 12px;">New tasks automatically get a chip in the Timetable's "Unscheduled" tray.</p>
+    <div id="todoList"></div>
+  </div>
+
+  <!-- TIMETABLE TAB -->
+  <div id="tab-timetable" class="card" style="display:none;">
+    <div class="topline">
+      <h2 style="border:none;margin:0;">Weekly Timetable</h2>
+      <div class="row" style="margin:0;">
+        <label class="chk"><input type="checkbox" id="todayOnlyToggle" onchange="renderGrid()"> Today only</label>
+        <label class="chk"><input type="checkbox" id="hideEmptyToggle" onchange="onHideEmptyToggle()"> Hide empty hours</label>
+        <label class="chk">From <select id="dayStartSelect" onchange="onRangeChange()" style="padding:4px 6px;"></select></label>
+        <label class="chk">To <select id="dayEndSelect" onchange="onRangeChange()" style="padding:4px 6px;"></select></label>
+        <button class="primary" onclick="toggleSlotForm()">+ Add custom slot</button>
+      </div>
+    </div>
+    <div class="legend" id="legend"></div>
+    <p class="sub" style="margin:0 0 12px;">Drag chips onto the grid to schedule. Drag the ⠿ handle to reschedule. Drag the bottom-right corner to resize duration.</p>
+
+    <div id="slotForm" class="row" style="display:none;background:#fafbfc;padding:10px;border-radius:10px;flex-wrap:wrap;">
+      <select id="formDay"></select>
+      <select id="formHour"></select>
+      <select id="formDuration">
+        <option value="1">1 hr</option>
+        <option value="2">2 hrs</option>
+        <option value="3">3 hrs</option>
+      </select>
+      <input type="text" id="formLabel" placeholder="Activity name">
+      <select id="formCategory"></select>
+      <label class="chk"><input type="checkbox" id="formRecurring"> 🔁 Recurring weekly</label>
+      <label class="chk"><input type="checkbox" id="formBuffer"> + 15 min buffer after</label>
+      <button class="primary" onclick="addEvent()">Save</button>
+    </div>
+
+    <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Unscheduled (from to-do list)</div>
+    <div id="tray" class="tray"></div>
+
+    <div class="table-scroll">
+      <div id="grid" class="grid7"></div>
+    </div>
+  </div>
+
+  <!-- STATS TAB -->
+  <div id="tab-stats" class="card" style="display:none;">
+    <h2 style="border:none;">Overview</h2>
+    <div class="stats-grid" id="statsGrid"></div>
+    <div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">Task completion</div>
+      <div class="bar-bg"><div class="bar-fill" id="completionBar" style="width:0%;"></div></div>
+    </div>
+    <div style="margin-top:18px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Scheduled hours by day</div>
+      <div id="dayBars"></div>
+    </div>
+    <div style="margin-top:18px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Weekly time budget by category (set target hrs)</div>
+      <div id="budgetRows"></div>
+    </div>
+    <div style="margin-top:18px;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Last 7 days — tasks completed</div>
+      <div id="historyBars"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const TODAY_NAME = DAYS[(new Date().getDay()+6)%7]; // JS Sun=0 -> map to Mon-first
+let dayStart = Number(localStorage.getItem('dash_dayStart') ?? 6);
+let dayEnd = Number(localStorage.getItem('dash_dayEnd') ?? 22);
+function buildHours(){ return Array.from({length: dayEnd-dayStart+1}, (_,i)=>dayStart+i); }
+let HOURS = buildHours();
+let hideEmptyHours = JSON.parse(localStorage.getItem('dash_hideEmpty') || 'false');
+const CATEGORIES = [
+  {key:"work", label:"Work", color:"#dbeafe", border:"#60a5fa"},
+  {key:"personal", label:"Personal", color:"#fce7f3", border:"#f472b6"},
+  {key:"health", label:"Health", color:"#d1fae5", border:"#34d399"},
+  {key:"learning", label:"Learning", color:"#ede9fe", border:"#a78bfa"},
+  {key:"other", label:"Other", color:"#fef3c7", border:"#fbbf24"},
+];
+function catInfo(key){ return CATEGORIES.find(c=>c.key===key) || CATEGORIES[4]; }
+
+let todos = JSON.parse(localStorage.getItem('dash_todos') || 'null') || [
+  {id:1, text:"Review production schedule vs OEM forecast", done:false, priority:"high", category:"work", createdAt:Date.now()},
+  {id:2, text:"Update master data sheet for new SKUs", done:false, priority:"medium", category:"work", createdAt:Date.now()},
+  {id:3, text:"Practice SQL joins (30 min)", done:false, priority:"low", category:"learning", createdAt:Date.now()},
+];
+let events = JSON.parse(localStorage.getItem('dash_events') || 'null');
+if(!events){
+  events = todos.map(t => ({id: Date.now()+Math.random(), taskId: t.id, day: null, hour: null, duration:1, label: t.text, category: t.category||"work", recurring:false, isBuffer:false}));
+}
+let budgets = JSON.parse(localStorage.getItem('dash_budgets') || 'null') || {work:20, personal:5, health:5, learning:5, other:3};
+
+let undoStack = [];
+function snapshot(){
+  undoStack.push(JSON.stringify({todos, events, budgets}));
+  if(undoStack.length>15) undoStack.shift();
+  document.getElementById('undoBtn').disabled = false;
+}
+function undo(){
+  if(undoStack.length===0) return;
+  const prev = JSON.parse(undoStack.pop());
+  todos = prev.todos; events = prev.events; budgets = prev.budgets;
+  save();
+  renderTodos(); renderTray(); renderGrid(); renderLegend(); renderBudgetInputs();
+  document.getElementById('undoBtn').disabled = undoStack.length===0;
+}
+
+function todayKey(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function logHistory(){
+  let history = JSON.parse(localStorage.getItem('dash_history') || '{}');
+  const done = todos.filter(t=>t.done).length;
+  history[todayKey()] = { total: todos.length, done, scheduled: events.filter(e=>e.day!==null).length };
+  // keep last 30 days only
+  const keys = Object.keys(history).sort();
+  if(keys.length > 30){ keys.slice(0, keys.length-30).forEach(k=>delete history[k]); }
+  localStorage.setItem('dash_history', JSON.stringify(history));
+}
+function save(){
+  localStorage.setItem('dash_todos', JSON.stringify(todos));
+  localStorage.setItem('dash_events', JSON.stringify(events));
+  localStorage.setItem('dash_budgets', JSON.stringify(budgets));
+  logHistory();
+}
+
+function switchTab(tab){
+  ['todo','timetable','stats'].forEach(t=>{
+    document.getElementById('tab-'+t).style.display = (t===tab)?'block':'none';
+  });
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  if(tab==='stats') { renderStats(); renderBudgetInputs(); renderHistory(); }
+  if(tab==='timetable') { renderTray(); renderGrid(); renderLegend(); }
+}
+
+function formatHour(h){
+  const period = h>=12?'PM':'AM';
+  let hr = h%12; if(hr===0) hr=12;
+  return hr+':00 '+period;
+}
+function fillCategorySelect(sel){
+  sel.innerHTML = CATEGORIES.map(c=>`<option value="${c.key}">${c.label}</option>`).join('');
+}
+
+/* ---------- TODO ---------- */
+function renderTodos(){
+  const q = (document.getElementById('searchInput').value||'').toLowerCase();
+  const list = document.getElementById('todoList');
+  list.innerHTML = '';
+  if(todos.length===0) list.innerHTML = '<div class="empty">No tasks yet. Add one above.</div>';
+  todos.forEach(t=>{
+    const match = !q || t.text.toLowerCase().includes(q);
+    const c = catInfo(t.category);
+    const div = document.createElement('div');
+    div.className = 'task '+t.priority+(t.done?' done':'')+(match?'':' faded');
+    div.innerHTML = `
+      <div class="check ${t.done?'done':''}" onclick="toggleTodo(${t.id})">${t.done?'✓':''}</div>
+      <div class="task-text" contenteditable="true" onblur="editTodo(${t.id}, this.innerText)">${t.text}</div>
+      <span class="cat-badge" style="background:${c.color};color:#333;">${c.label}</span>
+      <select onchange="setPriority(${t.id}, this.value)" style="font-size:11px;padding:4px 6px;">
+        <option value="high" ${t.priority==='high'?'selected':''}>High</option>
+        <option value="medium" ${t.priority==='medium'?'selected':''}>Medium</option>
+        <option value="low" ${t.priority==='low'?'selected':''}>Low</option>
+      </select>
+      <button class="ghost" onclick="deleteTodo(${t.id})">✕</button>
+    `;
+    list.appendChild(div);
+  });
+  const done = todos.filter(t=>t.done).length;
+  document.getElementById('todoCount').innerText = `${done}/${todos.length} done`;
+}
+function addTodo(){
+  const input = document.getElementById('newTodoInput');
+  const val = input.value.trim();
+  if(!val) return;
+  snapshot();
+  const priority = document.getElementById('newPriority').value;
+  const category = document.getElementById('newCategory').value;
+  const id = Date.now();
+  todos.push({id, text:val, done:false, priority, category, createdAt:Date.now()});
+  events.push({id: Date.now()+Math.random(), taskId:id, day:null, hour:null, duration:1, label:val, category, recurring:false, isBuffer:false});
+  input.value='';
+  save(); renderTodos(); renderTray(); renderGrid(); renderLegend();
+}
+document.getElementById('newTodoInput').addEventListener('keydown', e=>{ if(e.key==='Enter') addTodo(); });
+function toggleTodo(id){ snapshot(); todos = todos.map(t=>t.id===id?{...t,done:!t.done}:t); save(); renderTodos(); }
+function deleteTodo(id){
+  snapshot();
+  todos = todos.filter(t=>t.id!==id);
+  events = events.filter(e=>e.taskId!==id);
+  save(); renderTodos(); renderTray(); renderGrid();
+}
+function editTodo(id, text){
+  const clean = text.trim();
+  snapshot();
+  todos = todos.map(t=>t.id===id?{...t,text:clean||t.text}:t);
+  events = events.map(e=> e.taskId===id ? {...e, label: clean||e.label} : e);
+  save(); renderTodos(); renderTray(); renderGrid();
+}
+function setPriority(id, p){ snapshot(); todos = todos.map(t=>t.id===id?{...t,priority:p}:t); save(); renderTodos(); }
+
+/* ---------- TIMETABLE ---------- */
+function toggleSlotForm(){
+  const f = document.getElementById('slotForm');
+  f.style.display = f.style.display==='none' ? 'flex' : 'none';
+}
+function populateFormSelectors(){
+  document.getElementById('formDay').innerHTML = DAYS.map(d=>`<option value="${d}">${d}</option>`).join('');
+  document.getElementById('formHour').innerHTML = HOURS.map(h=>`<option value="${h}">${formatHour(h)}</option>`).join('');
+  fillCategorySelect(document.getElementById('formCategory'));
+  fillCategorySelect(document.getElementById('newCategory'));
+  const allHours = Array.from({length:24},(_,i)=>i);
+  document.getElementById('dayStartSelect').innerHTML = allHours.map(h=>`<option value="${h}" ${h===dayStart?'selected':''}>${formatHour(h)}</option>`).join('');
+  document.getElementById('dayEndSelect').innerHTML = allHours.map(h=>`<option value="${h}" ${h===dayEnd?'selected':''}>${formatHour(h)}</option>`).join('');
+  document.getElementById('hideEmptyToggle').checked = hideEmptyHours;
+}
+function onRangeChange(){
+  const ns = Number(document.getElementById('dayStartSelect').value);
+  const ne = Number(document.getElementById('dayEndSelect').value);
+  if(ne <= ns){ alert('End time must be after start time.'); return; }
+  dayStart = ns; dayEnd = ne;
+  HOURS = buildHours();
+  localStorage.setItem('dash_dayStart', dayStart);
+  localStorage.setItem('dash_dayEnd', dayEnd);
+  document.getElementById('formHour').innerHTML = HOURS.map(h=>`<option value="${h}">${formatHour(h)}</option>`).join('');
+  renderGrid();
+}
+function onHideEmptyToggle(){
+  hideEmptyHours = document.getElementById('hideEmptyToggle').checked;
+  localStorage.setItem('dash_hideEmpty', JSON.stringify(hideEmptyHours));
+  renderGrid();
+}
+function findOccupied(day, hour, duration, excludeId){
+  for(let i=0;i<duration;i++){
+    const h = hour+i;
+    if(events.find(e=> e.id!==excludeId && e.day===day && h>=e.hour && h<e.hour+(e.duration||1))) return true;
+  }
+  return false;
+}
+function addEvent(){
+  const label = document.getElementById('formLabel').value.trim();
+  if(!label) return;
+  const day = document.getElementById('formDay').value;
+  const hour = Number(document.getElementById('formHour').value);
+  const duration = Number(document.getElementById('formDuration').value);
+  const category = document.getElementById('formCategory').value;
+  const recurring = document.getElementById('formRecurring').checked;
+  const buffer = document.getElementById('formBuffer').checked;
+  if(findOccupied(day, hour, duration, null)){
+    alert('That time range overlaps an existing slot. Pick another time.');
+    return;
+  }
+  snapshot();
+  events.push({id:Date.now()+Math.random(), taskId:null, day, hour, duration, label, category, recurring, isBuffer:false});
+  if(buffer){
+    const bh = hour+duration;
+    if(!findOccupied(day, bh, 1, null) && HOURS.includes(bh)){
+      events.push({id:Date.now()+Math.random()+0.1, taskId:null, day, hour:bh, duration:1, label:'Buffer', category:'other', recurring:false, isBuffer:true});
+    }
+  }
+  document.getElementById('formLabel').value='';
+  save(); renderGrid(); renderLegend();
+  toggleSlotForm();
+}
+function deleteEvent(id){
+  snapshot();
+  const ev = events.find(e=>e.id===id);
+  events = events.filter(e=>e.id!==id);
+  if(ev && ev.taskId){
+    events.push({...ev, day:null, hour:null});
+  }
+  save(); renderTray(); renderGrid();
+}
+function unscheduleEvent(id){
+  snapshot();
+  events = events.map(e=> e.id===id ? {...e, day:null, hour:null} : e);
+  save(); renderTray(); renderGrid();
+}
+function findNextFreeSlot(duration){
+  const now = new Date();
+  const todayIdx = DAYS.indexOf(TODAY_NAME);
+  const curHour = now.getHours();
+  // build an ordered list of {day, hour} starting at "now" rounded up to the next hour, wrapping through the week
+  let startHourIdx = HOURS.findIndex(h => h >= curHour + 1);
+  if(startHourIdx === -1) startHourIdx = 0; // past end of day -> roll to next day's first hour
+  let rolledToNextDay = (HOURS.findIndex(h => h >= curHour + 1) === -1);
+  for(let offset = 0; offset < 7; offset++){
+    const dayIdx = (todayIdx + offset) % 7;
+    const day = DAYS[dayIdx];
+    const hoursToCheck = (offset===0 && !rolledToNextDay) ? HOURS.slice(startHourIdx) : HOURS;
+    for(const hour of hoursToCheck){
+      if(hour+duration-1 > HOURS[HOURS.length-1]) continue;
+      if(!findOccupied(day, hour, duration, null)) return {day, hour};
+    }
+  }
+  return null;
+}
+function autoSchedule(id){
+  const ev = events.find(e=>e.id===id);
+  if(!ev) return;
+  const slot = findNextFreeSlot(ev.duration||1);
+  if(!slot){ alert('No free slot found this week.'); return; }
+  snapshot();
+  events = events.map(e=> e.id===id ? {...e, day:slot.day, hour:slot.hour} : e);
+  save(); renderTray(); renderGrid();
+}
+
+let dragId = null;
+let resizing = null; // {id, startY, startDuration}
+
+function renderTray(){
+  const q = (document.getElementById('searchInput').value||'').toLowerCase();
+  const tray = document.getElementById('tray');
+  const unscheduled = events.filter(e=>e.day===null && !e.isBuffer);
+  tray.innerHTML = '';
+  if(unscheduled.length===0){
+    tray.innerHTML = '<div class="tray-empty">Nothing waiting — all tasks are scheduled, or add a task to see it here.</div>';
+  }
+  unscheduled.forEach(ev=>{
+    const match = !q || ev.label.toLowerCase().includes(q);
+    const c = catInfo(ev.category);
+    const todo = todos.find(t=>t.id===ev.taskId);
+    const ageMs = todo ? Date.now()-(todo.createdAt||Date.now()) : 0;
+    const overdue = ageMs > 1000*60*60*24*2; // 2 days
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (overdue?' overdue':'') ;
+    chip.style.display = match ? 'flex' : 'none';
+    chip.draggable = true;
+    chip.style.background = c.color;
+    chip.style.borderColor = c.border;
+    chip.innerHTML = `<span>⠿ ${overdue?'⏳ ':''}${ev.label}</span><button class="small" title="Auto-schedule next free slot" onclick="autoSchedule(${ev.id})">⏱</button>`;
+    chip.addEventListener('dragstart', e=>{ dragId = ev.id; e.dataTransfer.setData('text/plain', String(ev.id)); });
+    chip.addEventListener('dragend', ()=>{ dragId = null; });
+    tray.appendChild(chip);
+  });
+  tray.addEventListener('dragover', e=>{ e.preventDefault(); tray.classList.add('dragover'); });
+  tray.addEventListener('dragleave', ()=> tray.classList.remove('dragover'));
+  tray.addEventListener('drop', e=>{
+    e.preventDefault(); tray.classList.remove('dragover');
+    const id = Number(e.dataTransfer.getData('text/plain')) || dragId;
+    if(id) unscheduleEvent(id);
+  });
+}
+
+function renderLegend(){
+  document.getElementById('legend').innerHTML = CATEGORIES.map(c=>`<span><i style="background:${c.color};border:1px solid ${c.border}"></i>${c.label}</span>`).join('');
+}
+
+function renderGrid(){
+  const q = (document.getElementById('searchInput').value||'').toLowerCase();
+  const todayOnly = document.getElementById('todayOnlyToggle').checked;
+  const visibleDays = todayOnly ? [TODAY_NAME] : DAYS;
+  const grid = document.getElementById('grid');
+  grid.className = 'grid7' + (todayOnly ? ' today-only' : '');
+  grid.innerHTML = '';
+  grid.appendChild(document.createElement('div'));
+  visibleDays.forEach(d=>{
+    const h = document.createElement('div');
+    h.className='dhead' + (d===TODAY_NAME?' today':'');
+    h.innerText=d;
+    grid.appendChild(h);
+  });
+  HOURS.forEach(hour=>{
+    const hc = document.createElement('div');
+    hc.className='hcell'; hc.innerText=formatHour(hour);
+    grid.appendChild(hc);
+    visibleDays.forEach(day=>{
+      const cell = document.createElement('div');
+      cell.className='slot' + (day===TODAY_NAME?' today-col':'');
+      cell.dataset.day=day; cell.dataset.hour=hour;
+      cell.addEventListener('dragover', e=>{ e.preventDefault(); cell.classList.add('dragover'); });
+      cell.addEventListener('dragleave', ()=> cell.classList.remove('dragover'));
+      cell.addEventListener('drop', e=>{
+        e.preventDefault(); cell.classList.remove('dragover');
+        const id = Number(e.dataTransfer.getData('text/plain')) || dragId;
+        if(!id) return;
+        const ev = events.find(x=>x.id===id);
+        const dur = ev ? (ev.duration||1) : 1;
+        if(findOccupied(day, hour, dur, id)){
+          alert('That time range overlaps an existing slot.');
+          return;
+        }
+        snapshot();
+        events = events.map(x=> x.id===id ? {...x, day, hour} : x);
+        save(); renderTray(); renderGrid();
+      });
+      // only render event starting in this cell
+      const ev = events.find(e=>e.day===day && e.hour===hour);
+      if(ev){
+        const match = !q || ev.label.toLowerCase().includes(q);
+        const c = catInfo(ev.category);
+        const evDiv = document.createElement('div');
+        evDiv.className='ev' + (ev.isBuffer?' buffer':'') + (match?'':' dim');
+        evDiv.style.background = c.color;
+        evDiv.style.borderColor = c.border;
+        evDiv.style.height = `calc(${(ev.duration||1)*100}% + ${((ev.duration||1)-1)*3}px)`;
+        evDiv.innerHTML = `<span class="handle" draggable="true">⠿</span><span class="lbl" contenteditable="true">${ev.label}</span>${ev.recurring?'<span class="rec-badge">🔁</span>':''}<button>✕</button><div class="resize"></div>`;
+        const handle = evDiv.querySelector('.handle');
+        const lbl = evDiv.querySelector('.lbl');
+        const delBtn = evDiv.querySelector('button');
+        const resizeHandle = evDiv.querySelector('.resize');
+        handle.addEventListener('dragstart', e=>{ dragId = ev.id; e.dataTransfer.setData('text/plain', String(ev.id)); });
+        handle.addEventListener('dragend', ()=>{ dragId = null; });
+        lbl.addEventListener('blur', ()=> editEvent(ev.id, lbl.innerText));
+        delBtn.addEventListener('click', ()=> deleteEvent(ev.id));
+        resizeHandle.addEventListener('mousedown', e=>{
+          e.preventDefault();
+          resizing = {id: ev.id, startY: e.clientY, startDuration: ev.duration||1, day: ev.day, hour: ev.hour};
+        });
+        cell.style.position='relative';
+        cell.style.zIndex = 1;
+        cell.appendChild(evDiv);
+        evDiv.style.zIndex = 3;
+      }
+      grid.appendChild(cell);
+    });
+  });
+  drawNowLine(todayOnly, visibleDays);
+}
+
+document.addEventListener('mousemove', e=>{
+  if(!resizing) return;
+  const deltaPx = e.clientY - resizing.startY;
+  const rowH = 39; // approx row height incl gap
+  const deltaHrs = Math.round(deltaPx/rowH);
+  let newDuration = Math.max(1, Math.min(4, resizing.startDuration + deltaHrs));
+  // visual only feedback could be added; commit on mouseup
+  resizing.liveDuration = newDuration;
+});
+document.addEventListener('mouseup', ()=>{
+  if(!resizing) return;
+  const newDuration = resizing.liveDuration || resizing.startDuration;
+  if(newDuration !== resizing.startDuration){
+    if(!findOccupied(resizing.day, resizing.hour, newDuration, resizing.id)){
+      snapshot();
+      events = events.map(e=> e.id===resizing.id ? {...e, duration:newDuration} : e);
+      save(); renderGrid();
+    }
+  }
+  resizing = null;
+});
+
+function drawNowLine(todayOnly, visibleDays){
+  const grid = document.getElementById('grid');
+  const existing = grid.querySelector('.nowline');
+  if(existing) existing.remove();
+  if(!visibleDays.includes(TODAY_NAME)) return;
+  const now = new Date();
+  const h = now.getHours() + now.getMinutes()/60;
+  if(h < HOURS[0] || h > HOURS[HOURS.length-1]+1) return;
+  const rowIndex = h - HOURS[0];
+  const rowHeightPct = 100/HOURS.length;
+  const line = document.createElement('div');
+  line.className = 'nowline';
+  line.style.top = (rowIndex/HOURS.length*100) + '%';
+  // grid height isn't fixed px, so approximate using row count * approx row height
+  const approxRowPx = 39;
+  line.style.top = (rowIndex*approxRowPx) + 'px';
+  grid.style.position='relative';
+  grid.appendChild(line);
+}
+
+function editEvent(id, text){
+  const clean = text.trim();
+  snapshot();
+  events = events.map(e=>e.id===id?{...e,label:clean||e.label}:e);
+  save();
+}
+
+function onSearch(){
+  renderTodos(); renderTray(); renderGrid();
+}
+
+/* ---------- STATS ---------- */
+function renderStats(){
+  const total = todos.length;
+  const done = todos.filter(t=>t.done).length;
+  const pct = total ? Math.round((done/total)*100) : 0;
+  const high = todos.filter(t=>t.priority==='high' && !t.done).length;
+  const scheduled = events.filter(e=>e.day!==null).length;
+  const statsGrid = document.getElementById('statsGrid');
+  statsGrid.innerHTML = `
+    <div class="stat"><div class="num">${total}</div><div class="lbl">Total tasks</div></div>
+    <div class="stat"><div class="num">${done}</div><div class="lbl">Completed</div></div>
+    <div class="stat"><div class="num">${high}</div><div class="lbl">High priority open</div></div>
+    <div class="stat"><div class="num">${scheduled}</div><div class="lbl">Scheduled slots</div></div>
+  `;
+  document.getElementById('completionBar').style.width = pct+'%';
+
+  const counts = DAYS.map(d=> events.filter(e=>e.day===d).reduce((s,e)=>s+(e.duration||1),0));
+  const max = Math.max(1, ...counts);
+  document.getElementById('dayBars').innerHTML = DAYS.map((d,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <div style="width:34px;font-size:11px;color:var(--muted);">${d}</div>
+      <div class="bar-bg" style="flex:1;"><div class="bar-fill" style="width:${(counts[i]/max)*100}%;background:#60a5fa;"></div></div>
+      <div style="width:30px;font-size:11px;color:var(--muted);text-align:right;">${counts[i]}h</div>
+    </div>
+  `).join('');
+}
+function renderBudgetInputs(){
+  const wrap = document.getElementById('budgetRows');
+  wrap.innerHTML = CATEGORIES.map(c=>{
+    const actual = events.filter(e=>e.day!==null && e.category===c.key).reduce((s,e)=>s+(e.duration||1),0);
+    const target = budgets[c.key] ?? 0;
+    const pct = target ? Math.min(100, Math.round(actual/target*100)) : 0;
+    return `
+      <div class="budget-row">
+        <div class="name">${c.label}</div>
+        <input type="number" min="0" value="${target}" onchange="setBudget('${c.key}', this.value)"> hrs target
+        <div class="bar-bg" style="flex:1;"><div class="bar-fill" style="width:${pct}%;background:${c.border};"></div></div>
+        <div style="width:60px;font-size:11px;color:var(--muted);">${actual}h / ${target}h</div>
+      </div>`;
+  }).join('');
+}
+function setBudget(key, val){
+  budgets[key] = Number(val)||0;
+  save();
+  renderBudgetInputs();
+}
+function renderHistory(){
+  const history = JSON.parse(localStorage.getItem('dash_history') || '{}');
+  const days = [];
+  for(let i=6;i>=0;i--){
+    const d = new Date();
+    d.setDate(d.getDate()-i);
+    const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const label = d.toLocaleDateString(undefined,{weekday:'short'});
+    days.push({key, label, done: history[key]?.done ?? null});
+  }
+  const max = Math.max(1, ...days.map(d=>d.done||0));
+  document.getElementById('historyBars').innerHTML = days.map(d=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <div style="width:34px;font-size:11px;color:var(--muted);">${d.label}</div>
+      <div class="bar-bg" style="flex:1;"><div class="bar-fill" style="width:${d.done!==null ? (d.done/max*100) : 0}%;background:#a78bfa;"></div></div>
+      <div style="width:30px;font-size:11px;color:var(--muted);text-align:right;">${d.done ?? '–'}</div>
+    </div>
+  `).join('');
+}
+
+populateFormSelectors();
+renderTodos();
+renderTray();
+renderGrid();
+renderLegend();
+setInterval(()=>{ if(document.getElementById('tab-timetable').style.display!=='none') renderGrid(); }, 60000);
+</script>
+</body>
+</html>
