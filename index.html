@@ -6,11 +6,19 @@
 <title>Sarthak's Daily Tracker</title>
 <style>
   :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#1f2430; --muted:#5b6472;
+    --line:#e1e4ea; --accent:#2f3542; --accent2:#3f4a5c;
+    --high:#dc2626; --med:#b45309; --low:#047857; --now:#dc2626;
+    --surface2:#f1f3f6; --surface3:#e7eaf0;
+  }
+  html[data-theme="dark"]{
     --bg:#13151a; --card:#1b1e26; --ink:#e7e9ee; --muted:#8b93a3;
     --line:#2a2e38; --accent:#3a3f4b; --accent2:#aab2c4;
     --high:#f87171; --med:#fbbf24; --low:#34d399; --now:#f87171;
     --surface2:#22252e; --surface3:#262a34;
   }
+  html{transition:background .2s;}
+  body{transition:background .2s, color .2s;}
   *{box-sizing:border-box;}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);}
   .wrap{max-width:1080px;margin:0 auto;padding:18px 14px 60px;}
@@ -26,7 +34,8 @@
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px;}
   .card h2{font-size:15px;margin:0 0 12px;display:flex;justify-content:space-between;align-items:center;}
   .row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
-  input[type=text], select, input[type=number]{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--surface2);}
+  input[type=text], select, input[type=number]{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--surface2);color:var(--ink);}
+  select option{background:var(--card);color:var(--ink);}
   input[type=text]{flex:1;min-width:140px;}
   label.chk{font-size:12px;color:var(--accent2);display:flex;align-items:center;gap:5px;}
   button.primary{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;}
@@ -55,10 +64,13 @@
   .grid7.today-only{grid-template-columns:56px 1fr;min-width:280px;}
   .hcell{font-size:10px;color:var(--muted);display:flex;align-items:center;justify-content:flex-end;padding-right:6px;}
   .dhead{text-align:center;font-size:12px;font-weight:700;color:var(--muted);padding:4px 0;border-radius:6px;}
-  .dhead.today{background:#1e2a44;color:#7eb2ff;}
+  .dhead.today{background:var(--today-bg,#e8f0ff);color:var(--today-ink,#2563eb);}
+  html[data-theme="dark"] .dhead.today{--today-bg:#1e2a44;--today-ink:#7eb2ff;}
   .slot{min-height:46px;border:1px solid var(--line);border-radius:6px;position:relative;background:var(--surface2);}
-  .slot.today-col{background:#1a2230;}
-  .slot.dragover{background:#1e2a44;border-color:#5b8fd9;}
+  .slot.today-col{background:var(--todaycol-bg,#fafcff);}
+  html[data-theme="dark"] .slot.today-col{--todaycol-bg:#1a2230;}
+  .slot.dragover{background:var(--dragover-bg,#eef4ff);border-color:var(--dragover-border,#93c5fd);}
+  html[data-theme="dark"] .slot.dragover{--dragover-bg:#1e2a44;--dragover-border:#5b8fd9;}
   .slot.dim{opacity:.2;}
   .ev{position:absolute;inset:2px;border-radius:6px;font-size:10px;padding:3px 4px 3px 6px;display:flex;align-items:flex-start;justify-content:space-between;gap:3px;border:1px solid rgba(0,0,0,.08);z-index:2;overflow:hidden;}
   .ev.buffer{opacity:.55;font-style:italic;}
@@ -74,7 +86,7 @@
   .topline{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;}
   .save-note{font-size:11px;color:var(--low);}
   .tray{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding:10px;background:var(--surface2);border:1px dashed var(--line);border-radius:10px;min-height:44px;}
-  .tray.dragover{background:#1e2a44;border-color:#5b8fd9;}
+  .tray.dragover{background:var(--dragover-bg,#eef4ff);border-color:var(--dragover-border,#93c5fd);}
   .tray-empty{font-size:12px;color:var(--muted);padding:6px 4px;}
   .chip{display:flex;align-items:center;gap:6px;border-radius:8px;padding:6px 10px;font-size:12px;border:1px solid rgba(0,0,0,.08);cursor:grab;}
   .chip.overdue{box-shadow:0 0 0 1.5px #f97316;}
@@ -100,6 +112,7 @@
     <button class="tab-btn" data-tab="timetable" onclick="switchTab('timetable')">🗓️ Timetable</button>
     <button class="tab-btn" data-tab="stats" onclick="switchTab('stats')">📊 Stats</button>
     <button class="undo-btn" id="undoBtn" onclick="undo()" disabled>↺ Undo</button>
+    <button class="undo-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙 Dark mode</button>
     <div class="searchbox"><input type="text" id="searchInput" placeholder="🔍 Search tasks & slots..." oninput="onSearch()"></div>
   </div>
 
@@ -189,14 +202,34 @@ let dayEnd = Number(localStorage.getItem('dash_dayEnd') ?? 22);
 function buildHours(){ return Array.from({length: dayEnd-dayStart+1}, (_,i)=>dayStart+i); }
 let HOURS = buildHours();
 let hideEmptyHours = JSON.parse(localStorage.getItem('dash_hideEmpty') || 'false');
-const CATEGORIES = [
+let theme = localStorage.getItem('dash_theme') || 'light';
+document.documentElement.setAttribute('data-theme', theme);
+
+const CATEGORIES_LIGHT = [
+  {key:"work", label:"Work", color:"#dbeafe", border:"#3b82f6", text:"#1e3a5f"},
+  {key:"personal", label:"Personal", color:"#fce7f3", border:"#db2777", text:"#831843"},
+  {key:"health", label:"Health", color:"#d1fae5", border:"#059669", text:"#064e3b"},
+  {key:"learning", label:"Learning", color:"#ede9fe", border:"#7c3aed", text:"#3b1675"},
+  {key:"other", label:"Other", color:"#fef3c7", border:"#d97706", text:"#78350f"},
+];
+const CATEGORIES_DARK = [
   {key:"work", label:"Work", color:"#1e3a5f", border:"#60a5fa", text:"#bfdbfe"},
   {key:"personal", label:"Personal", color:"#4a2540", border:"#f472b6", text:"#fbcfe8"},
   {key:"health", label:"Health", color:"#1d3b30", border:"#34d399", text:"#a7f3d0"},
   {key:"learning", label:"Learning", color:"#332355", border:"#a78bfa", text:"#ddd6fe"},
   {key:"other", label:"Other", color:"#4a3a16", border:"#fbbf24", text:"#fde68a"},
 ];
-function catInfo(key){ return CATEGORIES.find(c=>c.key===key) || CATEGORIES[4]; }
+function getCategories(){ return theme==='dark' ? CATEGORIES_DARK : CATEGORIES_LIGHT; }
+function catInfo(key){ return getCategories().find(c=>c.key===key) || getCategories()[4]; }
+
+function toggleTheme(){
+  theme = theme==='dark' ? 'light' : 'dark';
+  localStorage.setItem('dash_theme', theme);
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('themeToggleBtn').innerText = theme==='dark' ? '☀️ Light mode' : '🌙 Dark mode';
+  renderTodos(); renderTray(); renderGrid(); renderLegend();
+  if(document.getElementById('tab-stats').style.display !== 'none'){ renderStats(); renderBudgetInputs(); renderHistory(); }
+}
 
 let todos = JSON.parse(localStorage.getItem('dash_todos') || 'null') || [
   {id:1, text:"Review production schedule vs OEM forecast", done:false, priority:"high", category:"work", createdAt:Date.now()},
@@ -259,7 +292,7 @@ function formatHour(h){
   return hr+':00 '+period;
 }
 function fillCategorySelect(sel){
-  sel.innerHTML = CATEGORIES.map(c=>`<option value="${c.key}">${c.label}</option>`).join('');
+  sel.innerHTML = getCategories().map(c=>`<option value="${c.key}">${c.label}</option>`).join('');
 }
 
 /* ---------- TODO ---------- */
@@ -464,7 +497,7 @@ function renderTray(){
 }
 
 function renderLegend(){
-  document.getElementById('legend').innerHTML = CATEGORIES.map(c=>`<span><i style="background:${c.color};border:1px solid ${c.border}"></i>${c.label}</span>`).join('');
+  document.getElementById('legend').innerHTML = getCategories().map(c=>`<span><i style="background:${c.color};border:1px solid ${c.border}"></i>${c.label}</span>`).join('');
 }
 
 function renderGrid(){
@@ -621,7 +654,7 @@ function renderStats(){
 }
 function renderBudgetInputs(){
   const wrap = document.getElementById('budgetRows');
-  wrap.innerHTML = CATEGORIES.map(c=>{
+  wrap.innerHTML = getCategories().map(c=>{
     const actual = events.filter(e=>e.day!==null && e.category===c.key).reduce((s,e)=>s+(e.duration||1),0);
     const target = budgets[c.key] ?? 0;
     const pct = target ? Math.min(100, Math.round(actual/target*100)) : 0;
@@ -683,6 +716,7 @@ function renderHistory(){
   localStorage.setItem(MIGRATION_KEY, '1');
 })();
 
+document.getElementById('themeToggleBtn').innerText = theme==='dark' ? '☀️ Light mode' : '🌙 Dark mode';
 populateFormSelectors();
 renderTodos();
 renderTray();
